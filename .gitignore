@@ -1,0 +1,10 @@
+.env
+venv
+.DS_Store
+.idea
+.gitlab-ci.yml
+tests
+reverse_proxy_handler.py
+version_script.sh
+__pycache__/
+*.pyc

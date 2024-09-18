@@ -1,0 +1,9 @@
+python-dotenv
+requests
+typer[all]
+boto3
+bs4
+
+# for dev/qa
+pytest
+coverage
