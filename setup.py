@@ -8,7 +8,7 @@ setuptools.setup(
     name="Reverse Proxy POC",
     author="Dermot Bruce-Agbeko",
     author_email="dermotag@hotmail.com",
-    description="Reverse proxy POC as part system design",
+    description="Reverse proxy POC as part of system design, intention - proxy H&B partner live streaming services.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",
