@@ -1,4 +1,3 @@
-from sqlite3 import paramstyle
 import pytest
 from unittest.mock import patch, Mock
 from serverless_reverse_proxy.processes.Request_Execute import RequestExecute
