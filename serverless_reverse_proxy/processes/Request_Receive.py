@@ -1,3 +1,9 @@
+import logging
+
+
+logger = logging.getLogger('my_logger')
+
+
 class RequestReceive:
     def __init__(self, reverse_proxy):
         self.reverse_proxy = reverse_proxy

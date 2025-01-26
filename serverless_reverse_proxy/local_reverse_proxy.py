@@ -1,7 +1,9 @@
 import json
 import sys
+import os
 import logging
 import requests
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from serverless_reverse_proxy.proxy_interface import ReverseProxyInterface
 
 
@@ -106,8 +108,9 @@ class LocalReverseProxy(ReverseProxyInterface):
 if __name__ == '__main__':
     proxy = LocalReverseProxy()
     print(sys.path)
+    print('checkpoint 2')
 
-    # Example event data simulating API Gateway request
+    #Example event data simulating API Gateway request
     event = {
         'httpMethod': 'GET',
         'path': '/google',
