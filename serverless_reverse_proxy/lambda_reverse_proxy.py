@@ -1,11 +1,11 @@
 import json
 import logging
 import requests
-from severless_reverse_proxy.proxy_interface import ReverseProxyInterface
+from serverless_reverse_proxy.proxy_interface import ReverseProxyInterface
 
 
-class ReverseProxy(ReverseProxyInterface):
-    """Extends Reverse Proxy interface, routing logic for incoming events"""
+class LambdaReverseProxy(ReverseProxyInterface):
+    """Concrete Reverse Proxy, routing logic for incoming API gateway events"""
 
     def __init__(self):
         super().__init__()
@@ -87,7 +87,7 @@ class ReverseProxy(ReverseProxyInterface):
 
 # Example usage for testing
 if __name__ == '__main__':
-    proxy = ReverseProxy()
+    proxy = LambdaReverseProxy()
 
     # Example event data simulating API Gateway request
     event = {

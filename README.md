@@ -135,7 +135,8 @@ curl -X GET "http://localhost:5001/proxy/example/path"
 ### Modular Design
 
 - Independent modules for request handling, routing, and response transformation.
-- Promotes separation of concerns and testability.
+  - Adheres to SOLID principles of OOP software design
+- Separation of concerns promotes testability.
 
 ### Scalable and Serverless
 

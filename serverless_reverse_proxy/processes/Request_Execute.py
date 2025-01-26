@@ -48,7 +48,7 @@ class RequestExecute:
         self.method = method
         self.url = url
         self.params = params
-        self.data = data  # todo: add validation to check if it is valid post data (according to provided headers)
+        self.data = data 
         self.headers = headers
         return self
 

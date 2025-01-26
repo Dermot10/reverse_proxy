@@ -3,6 +3,7 @@ requests
 typer[all]
 boto3
 bs4
+flask
 
 # for dev/qa
 pytest
