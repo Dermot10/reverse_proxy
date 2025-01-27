@@ -19,6 +19,7 @@ class RequestReceive:
         try:
             self.validate(request_payload)
             self.request_payload = request_payload
+            return self.request_payload
         except Exception as error:
             return {"Error validating request": error}
-        return self 
+        # return self 

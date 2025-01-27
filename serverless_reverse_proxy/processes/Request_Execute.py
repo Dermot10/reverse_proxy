@@ -76,8 +76,10 @@ class RequestExecute:
         if content_type and content_type.startswith('application/json'):
             text = self.raw_response.text
             json = self.raw_response.json()
+            content = json
         else:
             text = self.raw_response.text
+            content = text 
 
         return dict(content_type=content_type,
                     status_code=status_code,

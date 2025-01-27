@@ -23,17 +23,11 @@ class LocalReverseProxy(ReverseProxyInterface):
         self.route_config = {
             "/google": "https://www.google.com",
             "/hollandandbarrett": "https://www.hollandandbarrett.com/",
-            "/youtube": "https://www.youtube.com"
+            "/youtube": "https://www.youtube.com",
+            "/jsonplaceholder": "https://jsonplaceholder.typicode.com/posts"
         }
-        self.new_route_config = None 
-
-
-    def process_event(self, event): 
-        """Will act as a partial run function, central to processing of the incoming http event"""
-        pass 
-
-
-    def select_target_endpoint(self, path):
+        
+    def select_target_endpoint(self, path) -> str:
         """Match the request path to a configured endpoint"""
         if path in self.route_config:
             logging.info(f"Matched path {path} to target endpoint: {self.route_config[path]}")
@@ -42,82 +36,91 @@ class LocalReverseProxy(ReverseProxyInterface):
             logging.error(f"Invalid path {path}. Available paths: {', '.join(self.route_config.keys())}")
             return None
 
-    def validate_event(self, event):
-        """Validate incoming event to ensure it has the required fields"""
-        required_fields = ['httpMethod', 'path']
-        for field in required_fields:
-            if field not in event:
-                raise ValueError(f"Missing required field: {field}")
-        logging.info(f"Validated event with method {event['httpMethod']} and path {event['path']}")
+    def stringify_event_body(self, event) -> str: 
+        """Stringify the event body for the request if type dict, in place transformation"""
+        headers = event.get('headers', {})
+        if 'Content-Type' in headers and headers['Content-Type'] == 'application/json': 
+            if isinstance(event.get('data'), dict):
+                event['data'] = json.dumps(event['data'])
+            elif isinstance(event.get('data'), str):
+                # If the data is already a string, don't do anything.
+                pass
 
+    def validate_request_event(self, event) -> bool: 
+        """"""
+        is_valid = self.reverse_proxy.request_receive.validate(event)
+        print(f'Event validation result: {is_valid}')
 
-    def extract_request_data(self, event):
-        """Extracts HTTP method, URL, request body, and headers from the event, then forwards the request"""
-        try:
-            # Step 1: Validate the event input
-            self.validate_event(event)
+    def process_request_event(self, event):
+        """"""
+        processed_event = self.reverse_proxy.request_receive.run(event)
+        print(f'Event processed, returned payload result: {processed_event}')
 
-            # Step 2: Extract HTTP method and path
-            http_method = event['httpMethod']
-            path = event['path']
+    def process_request_execution(self, event):
+        """Utilise set up function for request http validation and execution"""
+        path = self.select_target_endpoint(event['url'])
+        try: 
+            self.stringify_event_body(event) # for a uniform request body 
 
-            # Step 3: Map the path to the corresponding target endpoint
-            target_url = self.select_target_endpoint(path)
-            if not target_url:
-                return self.generate_error_response(404, 'Invalid path')
+            self.reverse_proxy.request_execute.setup(
+                method=event['method'], 
+                url=path, 
+                params=event.get("params"),
+                data=event.get("data"),
+                headers=event.get('headers')
+            )
 
-            # Step 4: Prepare request data
-            request_body = event.get('body', None)
-            request_headers = event.get('headers', {})
+            request_kwargs=self.reverse_proxy.request_execute.run()
+            print(request_kwargs.raw_response)
+            response = self.reverse_proxy.request_execute.response()
+            print('\ncheckpoint 3 \n')
+            return response
+        except Exception as e: 
+            return {'error': str(e)}
 
-            # Log the outgoing request details
-            logging.info(f"Forwarding {http_method} request to {target_url} with body: {request_body}")
-
-            # Step 5: Forward the request to the target URL
-            response = requests.request(http_method, target_url, data=request_body, headers=request_headers)
-
-            # Step 6: Prepare and return the response
-            return self.generate_success_response(response)
-
-        except Exception as e:
-            logging.error(f"Error during request handling: {str(e)}", exc_info=True)
-            return self.generate_error_response(500, str(e))
-
-    def generate_success_response(self, response):
-        """Generate a successful response for API Gateway"""
-        return {
-            'statusCode': response.status_code,
-            'headers': {
-                'Content-Type': response.headers.get('Content-Type', 'application/json')
-            },
-            'body': response.text
-        }
-
-    def generate_error_response(self, status_code, message):
-        """Generate an error response for API Gateway"""
-        return {
-            'statusCode': status_code,
-            'headers': {
-                'Content-Type': 'application/json'
-            },
-            'body': json.dumps({'error': message})
-        }
+    def process_response_transformation(self): 
+        pass
+    
+    def run(self, event): 
+        # self.validate_request_event(event)
+        # self.process_request_event(event)
+        response = self.process_request_execution(event)
+        return response
 
 
 # Example usage for testing
 if __name__ == '__main__':
     proxy = LocalReverseProxy()
-    print(sys.path)
-    print('checkpoint 2')
 
     #Example event data simulating API Gateway request
     event = {
-        'httpMethod': 'GET',
-        'path': '/google',
-        'body': None,
+        'method': 'GET',
+        'url': '/google',
+        'data': None,
         'headers': {'Accept': 'application/json'}
     }
 
+    event_2 = {
+        'method': 'POST',
+        'url': '/jsonplaceholder',
+        'body': '{"userId": 1, "title": "foo", "body": "bar"}',
+        'headers': {'Content-Type': 'application/json'}
+    }
+
+    event_3 = {
+        "method": "POST",
+        "url": "/jsonplaceholder",
+        "params": {"userId": 1},
+        "data": {"title": "foo", "body": "bar", "userId": 1},
+        "headers": {'Content-Type': 'application/json'}
+    }
+
     # Simulate invoking the reverse proxy
-    response = proxy.extract_request_data(event)
+
+    path_check = proxy.select_target_endpoint(event_3["url"])
+    print(path_check)
+    print("")
+    response = proxy.run(event)
     print(response)
+    
+    

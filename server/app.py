@@ -26,9 +26,9 @@ def handle_proxy(path):
     }
 
     # Pass the event to the reverse proxy and get the response
-    proxy_response = proxy.validate_event(event)
+    proxy_response = proxy.validate_request_event(event)
 
-    # proxy_response = proxy.process_event(event)
+
     
     # Flask will use the response data returned from the proxy
     return jsonify(json.loads(proxy_response['body'])), proxy_response['statusCode']
