@@ -12,6 +12,10 @@ class ResponseTransform:
         """Execute the request and get the response text"""
         response = self.reverse_proxy.request_execute.response()
         text_response = response.get('text') if response else None
+
+        if isinstance(text_response, bytes):
+            text_response = text_response.decode('utf-8', errors='replace')  # Decode bytes to string
+
         if not text_response:
             self.logger.warning("No text response received.")
         return text_response

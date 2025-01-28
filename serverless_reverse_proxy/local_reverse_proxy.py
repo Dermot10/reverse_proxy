@@ -5,6 +5,7 @@ import logging
 import requests
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from serverless_reverse_proxy.proxy_interface import ReverseProxyInterface
+from serverless_reverse_proxy.processes.Response_Transform import ResponseTransform
 
 
 # take input from flask server and passes off to this class
@@ -73,19 +74,56 @@ class LocalReverseProxy(ReverseProxyInterface):
             request_kwargs=self.reverse_proxy.request_execute.run()
             print(request_kwargs.raw_response)
             response = self.reverse_proxy.request_execute.response()
+
+            page_title = event.get("page_title")  # Optional parameter
+            text_replaces = event.get("text_replaces")  # Optional parameter
+            print(page_title)
+            print(text_replaces)
+            
+            transformed_response = self.process_response_transformation(response, page_title, text_replaces)
+        
             print('\ncheckpoint 3 \n')
-            return response
+
+            return transformed_response
         except Exception as e: 
             return {'error': str(e)}
 
-    def process_response_transformation(self): 
-        pass
-    
-    def run(self, event): 
-        # self.validate_request_event(event)
-        # self.process_request_event(event)
+
+
+    def process_response_transformation(self, response, page_title=None, text_replaces=None):
+        """Transform the HTTP response using ResponseTransform"""
+
+        if page_title or text_replaces: 
+            transformed_response = self.reverse_proxy.response_transform.text(response, page_title, text_replaces)
+            if transformed_response: 
+                return transformed_response.get('text')
+            else: 
+                logging.warning("Transformation failed; returning original response.")
+                return response
+        else:
+        # No transformation required, return the original response
+            logging.info("No transformation required; returning original response.")
+            return response
+
+
+
+    def run(self, event, page_title=None, text_replaces=None):
+        """Main entry point for the reverse proxy"""
         response = self.process_request_execution(event)
-        return response
+
+        # Validate the response text
+        # if not isinstance(response.get("text"), str):
+        #     self.logger.error(f"Invalid response: {response}")
+        #     return response
+
+        # Apply response transformation if applicable
+        transformed_response = self.process_response_transformation(
+            response=response,
+            page_title=page_title,
+            text_replaces=text_replaces
+        )
+        return transformed_response if transformed_response else response 
+
 
 
 # Example usage for testing
@@ -115,12 +153,27 @@ if __name__ == '__main__':
         "headers": {'Content-Type': 'application/json'}
     }
 
+
+    event_transformed = {
+        'method': 'GET',
+        'url': '/google',  # Matches the route_config in the proxy
+        'headers': {'Accept': 'text/html'},
+        'page_title': 'My Custom Page Title',  # New page title to be set
+        'text_replaces': {
+            'Google': 'MyCustomSearchEngine',  # Replace "Google" with this
+            'I\'m Feeling Lucky': 'Try Your Luck',  # Example text replacement
+        }   
+    }
+
     # Simulate invoking the reverse proxy
 
-    path_check = proxy.select_target_endpoint(event_3["url"])
+    path_check = proxy.select_target_endpoint(event["url"])
     print(path_check)
     print("")
-    response = proxy.run(event)
+    #response = proxy.run(event)
+    response = proxy.run(event_transformed,
+                    page_title=event_transformed.get("page_title"),
+                    text_replaces=event_transformed.get("text_replaces"))
     print(response)
     
     
