@@ -155,11 +155,11 @@ if __name__ == '__main__':
         }   
     }
 
-    response = proxy.run(event_3)
-    # response = proxy.run(event_transformed,
-    #                 page_title=event_transformed.get("page_title"),
-    #                 text_replaces=event_transformed.get("text_replaces")
-    #                 )
+    # response = proxy.run(event_3)
+    response = proxy.run(event_transformed,
+                    page_title=event_transformed.get("page_title"),
+                    text_replaces=event_transformed.get("text_replaces")
+                    )
     print(response)
     
     
