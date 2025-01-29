@@ -1,3 +1,4 @@
+from xml.dom.minidom import ElementInfo
 import requests
 from urllib.parse import urlparse
 
@@ -77,9 +78,12 @@ class RequestExecute:
             text = self.raw_response.text
             json = self.raw_response.json()
             content = json
-        else:
+            print("\nThis should be json but could be text depending on their server")
+        elif content_type and ('text' in content_type or 'html' in content_type):
             text = self.raw_response.text
             content = text 
+            print("\nThis will be a text response")
+            return dict(content_type=content_type, status_code=status_code, content=content, text=content, headers=headers)
 
         return dict(content_type=content_type,
                     status_code=status_code,

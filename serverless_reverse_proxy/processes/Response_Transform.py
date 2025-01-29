@@ -1,5 +1,6 @@
 import logging
 from bs4 import BeautifulSoup
+from .Request_Execute import RequestExecute
 
 
 class ResponseTransform:
@@ -8,10 +9,15 @@ class ResponseTransform:
         self.reverse_proxy = reverse_proxy
         self.logger = logging.getLogger(__name__)  # Setup logger
 
-    def execute_request(self) -> str:
+    
+    def execute_transformation_request(self, response) -> str:
         """Execute the request and get the response text"""
-        response = self.reverse_proxy.request_execute.response()
+        # raw_response = self.reverse_proxy.request_execute.run()
+        # response = self.reverse_proxy.request_execute.response()
         text_response = response.get('text') if response else None
+        if not text_response:
+            self.logger.warning("No text response received.")
+            return None
 
         if isinstance(text_response, bytes):
             text_response = text_response.decode('utf-8', errors='replace')  # Decode bytes to string
@@ -41,6 +47,8 @@ class ResponseTransform:
         if not isinstance(response_text, str):
             self.logger.error("Response text is not a valid string.")
             return None
+        else: 
+            print("\nResponse is in fact text \n")
 
         try:
             soup = BeautifulSoup(response_text, 'html.parser')
@@ -48,9 +56,15 @@ class ResponseTransform:
 
             # Update the page title
             soup = self.update_page_title(soup, page_title)
+            # print(f'soup object: {soup} \n')
+            print(f"Updated Title: {soup.title.string} \n")  # Check the title directly
+            # print(f'\npage_title: {page_title} \n')
 
             # Replace text if required
             updated_text = self.replace_text(soup, text_replaces)
+            print(f'Updated HTML: {updated_text} \n')
+            # print(f'soup object: {soup} \n')
+            print(f'text replaces: {text_replaces} \n')
 
             return dict(text=updated_text)
 

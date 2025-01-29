@@ -71,6 +71,8 @@ class LocalReverseProxy(ReverseProxyInterface):
                 headers=event.get('headers')
             )
 
+
+            print(event.get('headers'))
             request_kwargs=self.reverse_proxy.request_execute.run()
             print(request_kwargs.raw_response)
             response = self.reverse_proxy.request_execute.response()
@@ -80,54 +82,51 @@ class LocalReverseProxy(ReverseProxyInterface):
             return {'error': str(e)}
 
 
-    def process_response_transformation(self, response, page_title=None, text_replaces=None):
+    def process_response_transformation(self, event, page_title=None, text_replaces=None):
         """Transform the HTTP response using ResponseTransform"""
 
+        response = self.process_request_execution(event)
         if page_title or text_replaces: 
-            transformed_response = self.reverse_proxy.response_transform.text(response, page_title, text_replaces)
-            if transformed_response: 
-                return transformed_response.get('text')
-            else: 
-                logging.warning("Transformation failed; returning original response.")
-                return response
-        else:
-        # No transformation required, return the original response
-            logging.info("No transformation required; returning original response.")
+            text_response = self.reverse_proxy.response_transform.execute_transformation_request(response)
+            updated_response = self.reverse_proxy.response_transform.text(text_response, page_title, text_replaces)
+            return updated_response
+        else: 
+            logging.warning("Transformation failed; returning original response.")
             return response
 
+      
 
 
     def run(self, event, page_title=None, text_replaces=None):
         """Main entry point for the reverse proxy"""
-        response = self.process_request_execution(event)
-
-        # Validate the response text
-        # if not isinstance(response.get("text"), str):
-        #     self.logger.error(f"Invalid response: {response}")
-        #     return response
 
         # Apply response transformation if applicable
-        transformed_response = self.process_response_transformation(
-            response=response,
-            page_title=page_title,
-            text_replaces=text_replaces
-        )
-        return transformed_response if transformed_response else response 
-
-
+        if page_title is not None and text_replaces is not None:
+            transformed_response = self.process_response_transformation(
+                event=event,
+                page_title=page_title,
+                text_replaces=text_replaces
+            )
+            return transformed_response
+        else: 
+            response = self.process_request_execution(event)
+            return response
+        
 
 # Example usage for testing
 if __name__ == '__main__':
     proxy = LocalReverseProxy()
 
-    #Example event data simulating API Gateway request
+    #Example event data simulating API Gateway request, 
+    #Serverresponse model - accept text/html
     event = {
         'method': 'GET',
         'url': '/google',
         'data': None,
-        'headers': {'Accept': 'application/json'}
+        'headers': {'Content-Type': 'application/json'}
     }
 
+    # Post application/json but body is text/html
     event_2 = {
         'method': 'POST',
         'url': '/jsonplaceholder',
@@ -135,6 +134,7 @@ if __name__ == '__main__':
         'headers': {'Content-Type': 'application/json'}
     }
 
+    # Post application/json and body is json 
     event_3 = {
         "method": "POST",
         "url": "/jsonplaceholder",
@@ -143,27 +143,23 @@ if __name__ == '__main__':
         "headers": {'Content-Type': 'application/json'}
     }
 
-
+    # GET text/html and the response is transformed
+    # Bs4 Requires specific html/text elements to exist
     event_transformed = {
         'method': 'GET',
         'url': '/google',  # Matches the route_config in the proxy
-        'headers': {'Accept': 'text/html'},
+        'headers': {'Content-Type': 'text/html'},
         'page_title': 'My Custom Page Title',  # New page title to be set
         'text_replaces': {
             'Google': 'MyCustomSearchEngine',  # Replace "Google" with this
-            'I\'m Feeling Lucky': 'Try Your Luck',  # Example text replacement
         }   
     }
 
-    # Simulate invoking the reverse proxy
-
-    path_check = proxy.select_target_endpoint(event["url"])
-    print(path_check)
-    print("")
-    #response = proxy.run(event)
-    response = proxy.run(event_transformed,
-                    page_title=event_transformed.get("page_title"),
-                    text_replaces=event_transformed.get("text_replaces"))
+    response = proxy.run(event_3)
+    # response = proxy.run(event_transformed,
+    #                 page_title=event_transformed.get("page_title"),
+    #                 text_replaces=event_transformed.get("text_replaces")
+    #                 )
     print(response)
     
     
