@@ -74,20 +74,10 @@ class LocalReverseProxy(ReverseProxyInterface):
             request_kwargs=self.reverse_proxy.request_execute.run()
             print(request_kwargs.raw_response)
             response = self.reverse_proxy.request_execute.response()
-
-            page_title = event.get("page_title")  # Optional parameter
-            text_replaces = event.get("text_replaces")  # Optional parameter
-            print(page_title)
-            print(text_replaces)
-            
-            transformed_response = self.process_response_transformation(response, page_title, text_replaces)
-        
             print('\ncheckpoint 3 \n')
-
-            return transformed_response
+            return response
         except Exception as e: 
             return {'error': str(e)}
-
 
 
     def process_response_transformation(self, response, page_title=None, text_replaces=None):
