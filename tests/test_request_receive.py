@@ -1,39 +1,43 @@
 import pytest
-from unittest.mock import patch, Mock
-from serverless_reverse_proxy.processes import Request_Receive
-from serverless_reverse_proxy.processes.Request_Receive import RequestReceive
+from serverless_reverse_proxy.processes.Request_Receive import RequestReceive  # Adjust import based on your project structure
 
 
+def test_validate_valid_payload():
+    receiver = RequestReceive(reverse_proxy=None)
+    valid_payload = {"key": "value"}
 
-def test_validate(): 
-    mock_reverse_proxy = Mock()
+    assert receiver.validate(valid_payload) is True
 
-    req_receive = RequestReceive(reverse_proxy=mock_reverse_proxy) #mock to fulfill dependency and test function
-    assert req_receive.validate({}) is True
+
+def test_validate_invalid_payload():
+    receiver = RequestReceive(reverse_proxy=None)
 
     with pytest.raises(ValueError, match="Invalid payload: must be a dictionary"):
-        req_receive.validate("invalid_payload")
+        receiver.validate("invalid_payload")  # Not a dict
 
-def test_run_without_mock():
-    mock_reverse_proxy = Mock()
-    req_receive = RequestReceive(reverse_proxy=mock_reverse_proxy) #ensure the dependency is correctly mocked
-    assert req_receive.reverse_proxy is mock_reverse_proxy
 
-def test_run():
-    mock_reverse_proxy = Mock() 
-    req_receive = RequestReceive(reverse_proxy=mock_reverse_proxy)
+@pytest.mark.parametrize("invalid_payload", [None, [], "string", 123, 45.67])
+def test_validate_various_invalid_payloads(invalid_payload):
+    receiver = RequestReceive(reverse_proxy=None)
 
-    # Test with a valid payload (a dictionary)
-    valid_payload = {"key": "value"}  # This is a valid dictionary payload
-    response = req_receive.run(valid_payload)
+    with pytest.raises(ValueError, match="Invalid payload: must be a dictionary"):
+        receiver.validate(invalid_payload)
 
-    # Assert that the returned response is an instance of RequestReceive (self)
-    assert isinstance(response, RequestReceive)
 
-    invalid_payload = "Invalid data"
-    response = req_receive.run(invalid_payload)
+def test_run_valid_payload():
+    receiver = RequestReceive(reverse_proxy=None)
+    valid_payload = {"key": "value"}
 
-    # Assert that the returned response is a dictionary with an error message
-    # Also the payload will be an invalid data type
-    assert isinstance(response, dict)
-    assert "Error validating request" in response 
+    result = receiver.run(valid_payload)
+    assert result == valid_payload
+    assert receiver.request_payload == valid_payload
+
+
+def test_run_invalid_payload():
+    receiver = RequestReceive(reverse_proxy=None)
+    invalid_payload = "not_a_dict"
+
+    result = receiver.run(invalid_payload)
+
+    assert "Error validating request" in result
+    assert isinstance(result["Error validating request"], ValueError)

@@ -1,4 +1,3 @@
-from xml.dom.minidom import ElementInfo
 import requests
 from urllib.parse import urlparse
 
@@ -16,7 +15,7 @@ class RequestExecute:
     def is_valid_url(self, url):
         """Validate URL format."""
         result = urlparse(url)
-        return all([result.scheme, result.netloc])
+        return result.scheme in ["http", "https"] and bool(result.netloc)
 
     def is_valid_method(self, method):
         """Validate HTTP method."""
@@ -75,7 +74,7 @@ class RequestExecute:
         json = None
         content = None
         if content_type and content_type.startswith('application/json'):
-            text = self.raw_response.text
+            text = self.raw_response.text 
             json = self.raw_response.json()
             content = json
             print("\nThis should be json but could be text depending on their server")
