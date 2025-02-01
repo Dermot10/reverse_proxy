@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import time
 import logging
 import requests
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
@@ -32,7 +33,11 @@ class LocalReverseProxy(ReverseProxyInterface):
         """Match the request path to a configured endpoint"""
         if path in self.route_config:
             logging.info(f"Matched path {path} to target endpoint: {self.route_config[path]}")
-            return self.route_config[path]
+            target_url = self.route_config[path]
+            if not target_url.startswith('https://'):
+                target_url = 'https://' + target_url
+                logging.info(f"Matched path {path} to target endpoint: {target_url}")
+            return target_url
         else:
             logging.error(f"Invalid path {path}. Available paths: {', '.join(self.route_config.keys())}")
             return None
@@ -59,7 +64,9 @@ class LocalReverseProxy(ReverseProxyInterface):
 
     def process_request_execution(self, event):
         """Utilise set up function for request http validation and execution"""
+        
         path = self.select_target_endpoint(event['url'])
+        print(f"Trust me this is the Proxy URL: {path}")
         try: 
             self.stringify_event_body(event) # for a uniform request body 
 
@@ -70,13 +77,21 @@ class LocalReverseProxy(ReverseProxyInterface):
                 data=event.get("data"),
                 headers=event.get('headers')
             )
-
-
-            print(event.get('headers'))
+            print("")
+            print(event['method'])
+            print(event['url'])
+            print(f'this is the params -> : {event.get("params")}')
+            print(f'this is the data -> : {event.get("data")}')
+            print(f'these are the headers -> :{event.get("headers")}')
+            # print("")
+            # print("Beginning sleep process-> ")
+            # time.sleep(120)
+            
             request_kwargs=self.reverse_proxy.request_execute.run()
             print(request_kwargs.raw_response)
             response = self.reverse_proxy.request_execute.response()
             print('\ncheckpoint 3 \n')
+            
             return response
         except Exception as e: 
             return {'error': str(e)}
@@ -93,9 +108,6 @@ class LocalReverseProxy(ReverseProxyInterface):
         else: 
             logging.warning("Transformation failed; returning original response.")
             return response
-
-      
-
 
     def run(self, event, page_title=None, text_replaces=None):
         """Main entry point for the reverse proxy"""
@@ -138,7 +150,7 @@ if __name__ == '__main__':
     event_3 = {
         "method": "POST",
         "url": "/jsonplaceholder",
-        "params": {"userId": 1},
+        # "params": {"userId": 1},
         "data": {"title": "foo", "body": "bar", "userId": 1},
         "headers": {'Content-Type': 'application/json'}
     }
@@ -155,11 +167,10 @@ if __name__ == '__main__':
         }   
     }
 
-    response = proxy.run(event_3)
+    response = proxy.run(event)
     # response = proxy.run(event_transformed,
     #                 page_title=event_transformed.get("page_title"),
     #                 text_replaces=event_transformed.get("text_replaces")
     #                 )
     print(response)
-    
     
