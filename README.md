@@ -50,6 +50,7 @@ This reverse proxy follows a **functional/compositional** design pattern:
 
 ### Component Architecture
 
+```mermaid
 sequenceDiagram
 Note over Client,Transform: Local Flask simulates AWS Lambda<br/>Pipeline is environment-agnostic
 participant Client
@@ -120,6 +121,8 @@ participant Transform as transform_response()
     Flask-->>Client: HTTP Response<br/>(status, headers, body)
 
     Note over Client,Flask: Error Handling:<br/>Any exception returns<br/>500 with error JSON
+
+```
 
 ```
 Flask Handler (Adapter Layer)
