@@ -75,6 +75,7 @@ participant Transform as transform_response()
 
     PipelineProxy->>Validate: validate_event(event)
     Validate-->>PipelineProxy: validated_event / error
+
     PipelineProxy->>Route: route_to_target(path, route_config)
     Route-->>PipelineProxy: target_url / error
 
@@ -97,19 +98,15 @@ participant Transform as transform_response()
     Parse-->>PipelineProxy: response dict
 
     alt transform_options provided
-        PipelineProxy->>Transform: transform_response(response, options)
-        Transform-->>Transform: Parse HTML (BeautifulSoup)
-
-        alt page_title specified
-            Transform-->>Transform: Update <title> tag
-        end
-
-        alt text_replaces specified
-            Transform-->>Transform: Replace text content
-        end
-
-        Transform-->>PipelineProxy: transformed_response
-    end
+      PipelineProxy->>Transform: transform_response(response, options)
+      alt page_title specified
+         Transform->>Transform: Update <title> tag
+      end
+      alt text_replaces specified
+         Transform->>Transform: Replace text content
+      end
+      Transform-->>PipelineProxy: transformed_response
+   end
 
     PipelineProxy-->>Flask: final_response dict
 
