@@ -26,6 +26,20 @@ def execute_request(method: str, url: str, params=None, data=None, headers=None)
 
     prepared_data = prepare_request_body(data, headers)
 
+    if headers is None:
+        headers = {}
+    
+    # Remove Flask-specific headers that might cause issues
+    headers_to_remove = ['Host', 'Content-Length']
+    for header in headers_to_remove:
+        headers.pop(header, None)
+    
+    # Add essential headers if not present
+    if 'User-Agent' not in headers:
+        headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    
+    if 'Accept' not in headers:
+        headers['Accept'] = '*/*'
     pipeline_logger.info(f"Executing: {method.upper()} {url}")
 
     try: 

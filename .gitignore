@@ -8,5 +8,4 @@ reverse_proxy_handler.py
 version_script.sh
 __pycache__/
 *.pyc
-reverse_proxy/project_notes.txt
-reverse_proxy/to_do_notes.txt
+notes/

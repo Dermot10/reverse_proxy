@@ -36,7 +36,7 @@ def proxy_request(event: Dict, transform_options: Optional[Dict] = None, route_c
         raw_response = execute_request(
             method=validated["method"], 
             url=target_url, 
-            params=-validated.get("params"),
+            params=validated.get("params"),
             data=validated.get("data"), 
             headers=validated.get("headers")
         )
