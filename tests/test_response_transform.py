@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, Mock, MagicMock
-from serverless_reverse_proxy.processes.Response_Transform import ResponseTransform
+from reverse_proxy.processes.Response_Transform import ResponseTransform
 from bs4 import BeautifulSoup
 
 @pytest.fixture

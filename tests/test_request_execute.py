@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, Mock
-from serverless_reverse_proxy.processes.Request_Execute import RequestExecute  # Adjust import based on your project structure
+from reverse_proxy.processes.Request_Execute import RequestExecute  # Adjust import based on your project structure
 
 
 def test_valid_url():

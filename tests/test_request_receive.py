@@ -1,5 +1,5 @@
 import pytest
-from serverless_reverse_proxy.processes.Request_Receive import RequestReceive  # Adjust import based on your project structure
+from reverse_proxy.processes.Request_Receive import RequestReceive  # Adjust import based on your project structure
 
 
 def test_validate_valid_payload():
