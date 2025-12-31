@@ -1,5 +1,0 @@
-# TODO - Main reverse proxy logic, handle the event data and deconstruct it
-# TODO - deconstruct event data, to be passed on to specific workflows.
-# TODO - Map out reverse proxy, API gateway -> lambda handler(event data) -> Main RP will deconstruct
-# TODO - Main RP is child of interface which instantiates class which has workflows to handle Requests and Responses
-# TODO - So Main RP can use workflows to manipulate data to and from the backend being reverse proxied.
