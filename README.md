@@ -52,80 +52,80 @@ This reverse proxy follows a **functional/compositional** design pattern:
 
 ```mermaid
 sequenceDiagram
-Note over Client,Transform: Local Flask simulates AWS Lambda<br/>Pipeline is environment-agnostic
-participant Client
-participant Flask as Flask Handler<br/>(Adapter)
-participant PipelineProxy as proxy_request()<br/>(Orchestrator)
-participant Validate as validate_event()
-participant Route as route_to_target()
-participant Execute as execute_request()
-participant Parse as parse_response()
-participant Transform as transform_response()  %% Last in timeline
+    participant Client
+    participant Flask as Flask Handler<br/>(Adapter)
+    participant PipelineProxy as proxy_request()<br/>(Orchestrator)
+    participant Validate as validate_event()
+    participant Route as route_to_target()
+    participant Execute as execute_request()
+    participant Parse as parse_response()
+    participant Transform as transform_response()
 
-%% --- Client request enters ---
-Client->>Flask: HTTP Request<br/>(GET/POST/PUT/DELETE)
+    Note over Client,Transform: Local Flask simulates AWS Lambda<br/>Pipeline is environment-agnostic
 
-Note over Flask: Adapter Layer<br/>Format Translation
-Flask->>Flask: Extract headers, body, params
-Flask->>Flask: Remove problematic headers<br/>(Host, Content-Length, etc.)
-Flask->>Flask: Build standard event format
+    %% --- Client request enters ---
+    Client->>Flask: HTTP Request<br/>(GET/POST/PUT/DELETE)
 
-Flask->>PipelineProxy: proxy_request(event, transform_options?)
+    Note over Flask: Adapter Layer<br/>Format Translation
+    Flask->>Flask: Extract headers, body, params
+    Flask->>Flask: Remove problematic headers<br/>(Host, Content-Length, etc.)
+    Flask->>Flask: Build standard event format
 
-Note over PipelineProxy: Orchestration Layer<br/>Business Logic Pipeline
+    Flask->>PipelineProxy: proxy_request(event, transform_options?)
 
-%% --- Validation ---
-PipelineProxy->>Validate: validate_event(event)
-Validate-->>PipelineProxy: validated_event / error
+    Note over PipelineProxy: Orchestration Layer<br/>Business Logic Pipeline
 
-%% --- Routing ---
-PipelineProxy->>Route: route_to_target(path, route_config)
-Route-->>PipelineProxy: target_url / error
+    %% --- Validation ---
+    PipelineProxy->>Validate: validate_event(event)
+    Validate-->>PipelineProxy: validated_event / error
 
-%% --- Execution ---
-PipelineProxy->>Execute: execute_request(method, url, params, data, headers)
-Execute-->>Execute: Validate URL format
-Execute-->>Execute: Prepare request body<br/>(stringify JSON if needed)
-Execute-->>Execute: Add User-Agent if missing
-Execute->>Execute: HTTP Request to target
-Note right of Execute: External HTTP call<br/>timeout=30s
-Execute-->>PipelineProxy: raw_response (requests.Response)
+    %% --- Routing ---
+    PipelineProxy->>Route: route_to_target(path, route_config)
+    Route-->>PipelineProxy: target_url / error
 
-%% --- Parsing ---
-PipelineProxy->>Parse: parse_response(raw_response)
-Parse-->>Parse: Extract status, headers
-Parse-->>Parse: Detect content type
-alt JSON Response
-    Parse-->>Parse: Parse JSON
-else HTML/Text Response
-    Parse-->>Parse: Extract text
-end
-Parse-->>PipelineProxy: response dict
+    %% --- Execution ---
+    PipelineProxy->>Execute: execute_request(method, url, params, data, headers)
+    Execute-->>Execute: Validate URL format
+    Execute-->>Execute: Prepare request body<br/>(stringify JSON if needed)
+    Execute-->>Execute: Add User-Agent if missing
+    Execute->>Execute: HTTP Request to target
+    Note right of Execute: External HTTP call<br/>timeout=30s
+    Execute-->>PipelineProxy: raw_response (requests.Response)
 
-%% --- Transformation (final pipeline step) ---
-alt transform_options provided (final step)
-    PipelineProxy->>Transform: transform_response(response, options)
-    alt page_title specified
-        Transform->>Transform: Update <title> tag
+    %% --- Parsing ---
+    PipelineProxy->>Parse: parse_response(raw_response)
+    Parse-->>Parse: Extract status, headers
+    Parse-->>Parse: Detect content type
+    alt JSON Response
+        Parse-->>Parse: Parse JSON
+    else HTML/Text Response
+        Parse-->>Parse: Extract text
     end
-    alt text_replaces specified
-        Transform->>Transform: Replace text content
+    Parse-->>PipelineProxy: response dict
+
+    %% --- Transformation (final pipeline step) ---
+    alt transform_options provided (final step)
+        PipelineProxy->>Transform: transform_response(response, options)
+        alt page_title specified
+            Transform->>Transform: Update <title> tag
+        end
+        alt text_replaces specified
+            Transform->>Transform: Replace text content
+        end
+        Transform-->>PipelineProxy: transformed_response
     end
-    Transform-->>PipelineProxy: transformed_response
-end
 
-%% --- Return to Flask / Client ---
-PipelineProxy-->>Flask: final_response dict
+    %% --- Return to Flask / Client ---
+    PipelineProxy-->>Flask: final_response dict
 
-Note over Flask: Format Response<br/>for HTTP
-Flask->>Flask: Extract content
-Flask->>Flask: Convert to bytes if needed
-Flask->>Flask: Set Content-Type header
+    Note over Flask: Format Response<br/>for HTTP
+    Flask->>Flask: Extract content
+    Flask->>Flask: Convert to bytes if needed
+    Flask->>Flask: Set Content-Type header
 
-Flask-->>Client: HTTP Response<br/>(status, headers, body)
+    Flask-->>Client: HTTP Response<br/>(status, headers, body)
 
-Note over Client,Flask: Error Handling:<br/>Any exception returns<br/>500 with error JSON
-
+    Note over Client,Flask: Error Handling:<br/>Any exception returns<br/>500 with error JSON
 ```
 
 ```
