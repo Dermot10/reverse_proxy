@@ -402,52 +402,6 @@ CMD ["python", "app.py"]
 
 ---
 
-## Future Enhancements
-
-- [ ] Add caching layer (Redis/Memcached)
-- [ ] Implement rate limiting
-- [ ] Add request/response logging middleware
-- [ ] Support for authentication/authorization
-- [ ] Async request handling (aiohttp)
-- [ ] Response streaming for large files
-- [ ] Metrics and monitoring integration
-- [ ] Custom middleware pipeline
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue: "Invalid chunk size" error**
-
-- **Cause:** Large responses with chunked encoding
-- **Fix:** Use `make_response()` or set explicit `Content-Length` header
-
-**Issue: "403 Forbidden" errors**
-
-- **Cause:** Missing or incorrect headers
-- **Fix:** Ensure `User-Agent` header is set (automatically added)
-
-**Issue: Timeout errors**
-
-- **Cause:** Target server is slow or blocking requests
-- **Fix:** Adjust timeout in `execute_request()` or try different target
-
----
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
----
-
 ## License
 
 This project is licensed under the MIT License. See LICENSE file for details.
